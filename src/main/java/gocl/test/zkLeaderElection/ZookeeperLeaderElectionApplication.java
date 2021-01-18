@@ -1,6 +1,6 @@
 package gocl.test.zkLeaderElection;
 
-import gocl.test.zkLeaderElection.zookeeper.candidate.CurrentLeadership;
+import gocl.test.zkLeaderElection.zookeeper.candidate.Leadership;
 import org.apache.curator.framework.CuratorFramework;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -20,14 +20,38 @@ public class ZookeeperLeaderElectionApplication {
 	@Value( "${gocl.test.leader.path}" )
 	private String leadershipPath;
 
-	// TODO: It could be nice to check with two beans having different leader role
+	@Value( "${gocl.test.minds.scheduled.leader.role}" )
+	private String mindsLeadershipRole;
+
+	@Value( "${gocl.test.minds.banxicoexchrate.leader.role}" )
+	private String banxicoexchrateLeadershipRole;
+
+	@Bean("mindsLeadership")
+	public Leadership mindsLeadership(){
+		return new Leadership(mindsLeadershipRole);
+	}
+
+	@Bean("banxicoexchrateLeadership")
+	public Leadership banxicoexchrateLeadership(){
+		return new Leadership(banxicoexchrateLeadershipRole);
+	}
+
 	@Bean
-	public LeaderInitiatorFactoryBean currentLeadershipLeaderInitiator(
-			CuratorFramework client, CurrentLeadership currentLeadership) {
+	public LeaderInitiatorFactoryBean mindsLeadershipLeaderInitiator(
+			CuratorFramework client, Leadership mindsLeadership) {
 		return new LeaderInitiatorFactoryBean()
 				.setClient(client)
 				.setPath(leadershipPath)
-				.setCandidate(currentLeadership);
+				.setCandidate(mindsLeadership);
+	}
+
+	@Bean
+	public LeaderInitiatorFactoryBean banxicoExchRateLeadershipLeaderInitiator(
+			CuratorFramework client, Leadership banxicoexchrateLeadership) {
+		return new LeaderInitiatorFactoryBean()
+				.setClient(client)
+				.setPath(leadershipPath)
+				.setCandidate(banxicoexchrateLeadership);
 	}
 
 }

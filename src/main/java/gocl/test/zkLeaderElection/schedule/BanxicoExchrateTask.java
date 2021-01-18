@@ -7,28 +7,18 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-@Slf4j
 @Component
-public class ScheduledTasks {
+@Slf4j
+public class BanxicoExchrateTask {
 
     @Autowired
-    @Qualifier("mindsLeadership")
+    @Qualifier("banxicoexchrateLeadership")
     private Leadership leadership;
 
-    private final static int MAX_EXECUTIONS = 10;
-
-    private int cont = 0;
-
-    @Scheduled(fixedDelay = 2000)
-    public void scheduleTask1 () {
+    @Scheduled(fixedDelay = 1000)
+    public void getExchangeRate () {
         if (this.leadership.isLeader()) {
-            log.info(" Starting scheduleTask1 {} - {} ", ++cont, System.currentTimeMillis());
-
-            // Reject leadership after MAX_EXECUTIONS
-            if (cont == MAX_EXECUTIONS) {
-                this.leadership.yield();
-                this.cont = 0;
-            }
+            log.info(" GetExchangeRate {} ", System.currentTimeMillis());
         }
     }
 }

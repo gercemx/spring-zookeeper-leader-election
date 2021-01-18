@@ -1,26 +1,27 @@
 package gocl.test.zkLeaderElection.zookeeper.candidate;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.integration.leader.Candidate;
 import org.springframework.integration.leader.Context;
-import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
-@Component
 @Slf4j
-public class CurrentLeadership implements Candidate {
+public class Leadership implements Candidate {
 
-    @Value( "${gocl.test.leader.role}" )
     private String leadershipRole;
 
     private Context leaderCtx;
 
     private final String ID;
 
-    public CurrentLeadership() {
-        ID = UUID.randomUUID().toString();
+    public Leadership() {
+        this.ID = UUID.randomUUID().toString();
+    }
+
+    public Leadership(String leadershipRole) {
+        this();
+        this.leadershipRole = leadershipRole;
     }
 
     @Override
@@ -38,18 +39,22 @@ public class CurrentLeadership implements Candidate {
         // TODO: If there will be some extra time, it could be nice to keep synchronized the
         //  onGranted, onRevoked and isLeader functions
         this.leaderCtx = ctx;
-        log.debug(" {} leadership granted ", this.getId());
+        log.info(" {} leadership granted ", this.getId());
     }
 
     @Override
     public void onRevoked(Context ctx) {
         this.leaderCtx = null;
-        log.debug(" {} leadership revoked ", this.getId());
+        log.info(" {} leadership revoked ", this.getId());
     }
 
     // TODO: May we check for different roles here?
     public boolean isLeader() {
         return this.leaderCtx != null && this.leaderCtx.isLeader();
+    }
+
+    public void yield() {
+        this.leaderCtx.yield();
     }
 }
 

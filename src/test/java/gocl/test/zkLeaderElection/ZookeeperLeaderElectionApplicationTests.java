@@ -1,12 +1,14 @@
 package gocl.test.zkLeaderElection;
 
 import gocl.test.AbstractIntegrationTest;
-import gocl.test.zkLeaderElection.zookeeper.candidate.CurrentLeadership;
+import gocl.test.zkLeaderElection.zookeeper.candidate.Leadership;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 
@@ -21,6 +23,25 @@ class ZookeeperLeaderElectionApplicationTests extends AbstractIntegrationTest {
 
 	@Value("${spring.cloud.zookeeper.connect-string}")
 	private String zookeeperConnectString;
+
+	private static final String MINDS_BEAN_NAME = "mindsLeadership";
+
+	@Autowired
+	@Qualifier(MINDS_BEAN_NAME)
+	private Leadership mindsLeadOne;
+
+	@Autowired
+	@Qualifier("banxicoexchrateLeadership")
+	private Leadership banxicoLeadOne;
+
+	private static SpringApplicationBuilder instanceTwo;
+
+	@BeforeEach
+	public void initialize() {
+		if (instanceTwo == null) {
+			instanceTwo = createInstance();
+		}
+	}
 
 	@SneakyThrows
 	@Test
@@ -53,24 +74,38 @@ class ZookeeperLeaderElectionApplicationTests extends AbstractIntegrationTest {
 		}
 	}
 
-	@Autowired
-	private CurrentLeadership leadOne;
-
 	@Test
 	public void uniqueLeaderTest() throws Exception {
-		CurrentLeadership leadTwo = createInstance("server.port=8081");
-		CurrentLeadership leadThree = createInstance("server.port=8082");
+		Leadership mindLeadTwo = getLeadership(instanceTwo, MINDS_BEAN_NAME);
 
 		// validate only one leader
-		Assertions.assertTrue(leadOne.isLeader() ^ leadTwo.isLeader() ^ leadThree.isLeader(),
+		Assertions.assertTrue(mindsLeadOne.isLeader() ^ mindLeadTwo.isLeader(),
 			"There is more than one leader");
 	}
 
-	private CurrentLeadership createInstance(String properties) {
-		SpringApplicationBuilder instance = new SpringApplicationBuilder(ZookeeperLeaderElectionApplication.class)
-				.properties(properties);
+	@Test
+	public void distributedLeadersTest() throws Exception {
+
+		//Reject instanceOne leadership for mindsSchedule process
+		mindsLeadOne.yield();
+		Leadership mindsLeadTwo = getLeadership(instanceTwo, MINDS_BEAN_NAME);
+
+		//Wait one sec for the leadership to change
+		Thread.sleep(1000);
+
+		// Validate one leadership in each instance
+		Assertions.assertTrue(banxicoLeadOne.isLeader() && mindsLeadTwo.isLeader() ,
+			"Leadership undistributed");
+	}
+
+	private SpringApplicationBuilder createInstance() {
+		SpringApplicationBuilder instance = new SpringApplicationBuilder(ZookeeperLeaderElectionApplication.class);
 		instance.run();
-		return instance.context().getBean(CurrentLeadership.class);
+		return instance;
+	}
+
+	private Leadership getLeadership(SpringApplicationBuilder instance, String beanName) {
+		return instance.context().getBean(beanName,Leadership.class);
 	}
 
 }

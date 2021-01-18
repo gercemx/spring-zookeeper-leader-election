@@ -10,8 +10,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ActiveProfiles(value = "test")
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(
-        classes = ZookeeperLeaderElectionApplication.class,
-        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
+        classes = ZookeeperLeaderElectionApplication.class
 )
 public abstract class AbstractIntegrationTest extends TestContextInitializer {
 
